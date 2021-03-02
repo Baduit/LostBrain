@@ -1,0 +1,142 @@
+{ Characters definitions }
++62 #move_right >1
++60 #move_left >1
++43 #incr >1
++45 #decr >1
++44 #getchar >1
++46 #putchar >1
++91 #opening_bracket >1
++93 #closing_bracket >1
+
+{ Stuff for the matching bracket counter }
+#nb_bracket_diff >1
+
+*incr_nb_bracket_diff_skip
+:incr_nb_bracket_diff
+	#tmp @nb_bracket_diff +1 @tmp
+	&incr_nb_bracket_diff
+:incr_nb_bracket_diff_skip
+
+*decr_nb_bracket_diff_skip
+:decr_nb_bracket_diff
+	#tmp @nb_bracket_diff -1 @tmp
+	&decr_nb_bracket_diff
+:decr_nb_bracket_diff_skip
+
+{ Program loading }
+#brainfuck_prg_begin #instruction_iterator
+"input_file" >1
+#brainfuck_prg_end >1
+
+{ Define the program memory, 30 000 bytes }
+#prg_memory_begin #prg_ptr
+>30000 #prg_memory_end
+
+@instruction_iterator
+{ Main loop }
+:main_loop_begin
+	?move_right *do_move_right
+	?move_left *do_move_left
+	?incr *do_incr
+	?decr *do_decr
+	?getchar *do_getchar
+	?putchar *do_putchar
+	?opening_bracket *do_opening_bracket
+	?closing_bracket *do_closing_bracket
+
+
+    :computing_done
+    { Move to the right the instruction_iterator }
+    @instruction_iterator >1 #instruction_iterator
+
+    { If we are not at the end, continue }
+    !brainfuck_prg_end *__exit__
+	*main_loop_begin
+
+
+:do_move_right
+    @prg_ptr >1 #prg_ptr
+    *computing_done
+
+:do_move_left
+    @prg_ptr <1 #prg_ptr
+    *computing_done
+
+:do_incr
+    @prg_ptr +1
+    *computing_done
+
+:do_decr
+    @prg_ptr -1
+    *computing_done
+
+:do_getchar
+    @prg_ptr [
+    *computing_done
+
+:do_putchar
+    @prg_ptr ]
+    *computing_done	
+
+:do_opening_bracket
+	{ If the value at the ptr != 0 nothing special to do }
+	@prg_ptr ? *computing_done	
+	{ Else it means the value at the ptr = 0 so we need to go after the corresponding closing bracket }
+	@instruction_iterator
+	:opening_bracket_loop_begin
+		>1
+		!brainfuck_prg_end *exit_on_error
+		?opening_bracket *incr_nb_bracket_diff
+		?closing_bracket *opening_bracket_handle_closing_bracket
+		*opening_bracket_loop_begin
+	:opening_bracket_loop_end
+	{ Position the instruction_iterator where it belongs }
+	@corresponding_end_bracket #instruction_iterator
+	*computing_done	
+
+:opening_bracket_handle_closing_bracket
+	#corresponding_end_bracket
+	@nb_bracket_diff
+	{ If nb_bracket_diff == 0, we found it }
+	?0 *opening_bracket_loop_end
+	{ else if nb_bracket_diff != 0, decrement nb_bracket_diff}
+	? *decr_nb_bracket_diff
+	@corresponding_end_bracket
+	&opening_bracket_handle_closing_bracket
+
+:do_closing_bracket
+	{ If the value == 0, nothing special to do}
+	@prg_ptr ?0 *computing_done
+	{ Else if means I must find the corresponding opening bracket }
+	@instruction_iterator
+	:closing_bracket_loop_begin
+		<1
+		?closing_bracket *incr_nb_bracket_diff
+		?opening_bracket *closing_bracket_handle_closing_bracket
+		*closing_bracket_loop_begin
+	:closing_bracket_loop_end
+	@corresponding_begin_bracket #instruction_iterator
+	*computing_done	
+
+:closing_bracket_handle_closing_bracket	
+	#corresponding_begin_bracket
+	@nb_bracket_diff
+	{ If nb_bracket_diff == 0, we found it }
+	?0 *closing_bracket_loop_end
+	{ else if nb_bracket_diff != 0, decrement nb_bracket_diff}
+	? *decr_nb_bracket_diff
+	@corresponding_begin_bracket
+	&closing_bracket_handle_closing_bracket
+
+
+
+:exit_on_error
+	*print_error
+	*__exit__
+
+:print_error
+	#print_error_tmp
+	@__end__>1
+	+69]; +82]]; +79]; +82]; +10];
+	@print_error_tmp
+	&print_error
