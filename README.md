@@ -12,3 +12,7 @@ PainPerdu is an esoteric langage I created. There is more information in this re
 
 # What is brainfuck ?
 It is a very simple esoteric langage. More informations on Wikipedia : https://en.wikipedia.org/wiki/Brainfuck
+
+# Limitations
+* Your brainfuck code must be in a file named __input_file__
+* You can't nest more that 255 []
